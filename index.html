@@ -13,7 +13,7 @@
         }
 
         .cumulativebar-bar {
-            fill: rgba(150, 90, 90, 0.25);
+            fill: rgb(240, 147, 196);
         }
 
         .cumulativebar-exceeded {
@@ -52,7 +52,7 @@
                 this.g = this.svg.append('g')
                     .attr('transform', 'translate(' + options.margin.left + ',' + options.margin.top + ')');
                 this.init(data, options)
-                this.draw(data)
+                this.draw()
             }
 
             /**
@@ -60,9 +60,6 @@
              * If range use that for y-axis range.
              */
             init(data, options = {}) {
-
-                console.log("data", data)
-                console.log("options", options)
 
                 var defaults = {
                     range: null,
@@ -77,20 +74,23 @@
                 this.x = d3.scaleBand().rangeRound([0, this.width]).padding(0.1).domain(Object.keys(data))
                 this.y = d3.scaleLinear().rangeRound([this.height, 0]).domain(options.range);
                 this.invy = d3.scaleLinear().rangeRound(options.range).domain([this.height, 0]);
-
             }
 
             /**
              * Draw / redraw
              */
-            draw(data) {
+            draw() {
                 var dg = d3.drag()
-                var circles = this.g.selectAll('.bar').data(this.data).enter()
+
+                var rectangles = this.g.selectAll('.bar')
+                    .data(this.data)
+                    .enter()
                     .append('g')
                     .attr('transform', (d, i) => {
                         return 'translate(' + this.x(i) + ',0)';
                     })
-                circles.append('rect')
+
+                rectangles.append('rect')
                     .attr('class', 'bar-bar')
                     .attr('width', this.x.bandwidth())
                     .attr('transform', (d) => {
@@ -108,9 +108,16 @@
                     .call(dg.on('end', (d, i, n) => {
                         this.stopped(d, i, n)
                     }))
-                circles.exit();
 
-                this.g.append("line").attr("x1", this.x(0) - this.x(1)).attr("y1", this.y(GLOBALBUDGET)).attr("x2", this.x(data.length - 1) + this.x(1)).attr("y2", this.y(GLOBALBUDGET)).attr("stroke-width", 2).attr("stroke", "red");
+                rectangles.exit();
+                this.g.append("line")
+                    .attr("x1", this.x(0) - this.x(1))
+                    .attr("y1", this.y(GLOBALBUDGET))
+                    .attr("x2", this.x(data.length - 1) + this.x(1))
+                    .attr("y2", this.y(GLOBALBUDGET))
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "red")
+                    .style("stroke-dasharray", ("3, 3"));
 
                 this.g.append('text')
                     .attr('text-anchor', 'middle')
@@ -121,11 +128,13 @@
             }
 
             started(d, i, n) {
+                console.log('Drag started', d, i);
                 this.selected[0] = this.selected[1] = i
                 d3.select(n[i]).classed('bar-active', true)
             }
 
             dragged(d, i, n) {
+                console.log('Drag d, i', d, i);
                 var mouse = d3.mouse(this.g.node());
                 this.selected[1] = this.xi(mouse[0]);
                 var target = d3.selectAll(n.slice.apply(n, this.selection()));
@@ -141,10 +150,11 @@
                     accumulatedData[j] -= delta;
                     if (accumulatedData[j] < 0) accumulatedData[j] = 0;
                 }
-                y.draw();
+                cumulativeBarChart.draw();
             }
 
             stopped(d, i, n) {
+                console.log('Drag stopped');
                 d3.selectAll(n).classed('bar-active', false)
                 this.selected = [-1, -1]
             }
@@ -153,7 +163,6 @@
              * Return current drag selection.
              */
             selection() {
-                //return [this.selected[0], 1+this.selected[0]]
                 return [Math.min(this.selected[0], this.selected[1]), 1 + Math.max(this.selected[0], this.selected[1])]
             }
 
@@ -170,14 +179,6 @@
                     }
                 }
                 return this.x.domain().length - 1
-            }
-
-            get() {
-                return this.data
-            }
-
-            set(data) {
-                this.init(data)
             }
         }
 
@@ -200,29 +201,29 @@
                 this.draw(data)
             }
 
-            initDraw(data, options) {
-                this.init(data, options)
-                this.draw(data)
-            }
-
-
             /**
              * Draw data and set up graph based on data. data must be an array of numbers.
              * If range use that for y-axis range.
              */
             init(data, options = {}) {
+
+                this.data = data
+
                 var defaults = {
                     range: null,
                     xFormatter: null,
                 }
                 options = Object.assign(defaults, options)
-                this.selected = [-1, -1]
-                this.data = data
+
+                /*
                 if (options.range == null) {
                     options.range = [Math.min.apply(null, this.data), Math.max.apply(null, this.data)]
                 }
-                this.x = d3.scaleBand().rangeRound([0, this.width]).padding(0.1).domain(Object.keys(data))
+                */
+
+                this.x = d3.scaleBand().rangeRound([0, this.width]).padding(0.1).domain(Object.keys(this.data))
                 this.y = d3.scaleLinear().rangeRound([this.height, 0]).domain(options.range);
+
                 this.g.append('g')
                     .attr('class', 'axis axis--x')
                     .attr('transform', 'translate(0,' + this.height + ')')
@@ -238,18 +239,27 @@
              * Draw / redraw
              */
             draw(data) {
-                var dg = d3.drag()
-                if (this.circles != undefined) {
-                    this.circles.remove();
+
+                console.log("-----")
+                console.log("data", data)
+                console.log("this.data", this.data)
+                console.log("-----")
+
+                this.data= data
+
+                if (this.rectangles != undefined) {
+                    this.rectangles.remove();
                 }
-                this.circles = this.g.selectAll('.bar').data(this.data).enter()
+
+                this.rectangles = this.g.selectAll('.bar')
+                    .data(this.data)
+                    .enter()
                     .append('g')
                     .attr('transform', (d, i) => {
                         return 'translate(' + this.x(i) + ',0)';
                     });
-                var budget = this.height - this.y(GLOBALBUDGET);
 
-                this.circles.append('rect')
+                this.rectangles.append('rect')
                     .attr('class', 'cumulativebar-exceeded')
                     .attr('width', this.x.bandwidth())
                     .attr('transform', (d) => {
@@ -258,7 +268,7 @@
                     .attr('height', (d) => {
                         return (d > GLOBALBUDGET ? this.height - this.y(d - GLOBALBUDGET) : 0);
                     })
-                this.circles.append('rect')
+                this.rectangles.append('rect')
                     .attr('class', 'cumulativebar-bar')
                     .attr('width', this.x.bandwidth())
                     .attr('transform', (d) => {
@@ -267,7 +277,7 @@
                     .attr('height', (d) => {
                         return this.height - this.y(Math.min(GLOBALBUDGET, d));
                     })
-                this.circles.exit()
+                this.rectangles.exit()
             }
 
             /**
@@ -290,39 +300,26 @@
     </script>
     <script>
 
-        function generateData(reductionRate) {
-
-            console.log("reductionRate " + reductionRate)
-
+        function calculateEmissions(reductionRate) {
             let factor = 1.0 - reductionRate;
-            let data = [600];
-            let accumulatedData = [600];
-            for (let i = 0; i < 25; i++) {
-                let item = data[data.length - 1] * factor
+            data = [600];
+            accumulatedData = [600];
+            for (let i = 0; i < 15; i++) {
+                item = data[data.length - 1] * factor
                 data.push(item);
                 accumulatedData.push(accumulatedData[accumulatedData.length - 1] + item);
             }
 
-            console.log("data")
-            console.log(data)
-
-            console.log("accumulatedData")
-            console.log(accumulatedData)
-
             return [data, accumulatedData]
         }
 
-        function createDiagram() {
-
-            <!-- Change this and, save and reload-->
-            reductionRate = 0.25;
-            document.getElementById("nValue").innerHTML = reductionRate * 100;
-
-            const [data, accumulatedData] = generateData(reductionRate);
+        function init() {
+            let reductionRate = 0.15;
+            const [data, accumulatedData] = calculateEmissions(reductionRate)
 
 
-            cumulativeBarChart = new CumulativeBarchart('svg', accumulatedData, {
-                range: [0, 7000],
+            this.cumulativeBarChart = new CumulativeBarchart('svg', accumulatedData, {
+                range: [0, 5000],
                 xFormatter: (n) => {
                     return d3.format('4d')(2020 + parseInt(n));
                 },
@@ -331,42 +328,29 @@
                 }
             })
 
-            editableBarChart = new EditableBarChart('svg', data, {
-                range: [0, 7000]
-            })
 
+            d3.select("#reductionRate").on("input", function () {
+                reductionRate = this.value/100;
+                const [data, accumulatedData] = calculateEmissions(reductionRate)
 
-        }
-    </script>
+                console.log("reductionRate has changed", reductionRate)
+                console.log("new accumulatedData", accumulatedData)
+                globalThis.cumulativeBarChart.draw(accumulatedData)
 
-    <script>
-
-        function update(nValue) {
-            console.log("nValue" + nValue)
-            const [data, accumulatedData] = generateData(nValue / 100)
-            cumulativeBarChart.initDraw(accumulatedData, {range: [0, 7000]})
-        }
-
-        function initRotatingText() {
-
-            // when the input range changes update value
-            d3.select("#nValue").on("input", function () {
-                update(+this.value);
             });
 
-            createDiagram()
+            this.editableBarChart = new EditableBarChart('svg', data, {range: [0, 5000]})
+
         }
     </script>
 
-
 </head>
-<body onload='initRotatingText()'>
+<body onload='init()'>
 <h1>Umeå kommun</H1>
 <p>Budget: 3140 kt CO2</p>
 <p>Emissions for 2018: 600 kt</p>
-<p>Reduction rate: <input type="number" min="0" max="360" step="2" value="10" id="nValue">% per year</p>
+<p>Reduction rate: <input type="number" min="0" max="360" step="1" value="15" id="reductionRate">% per year</p>
 
 <svg width='960' height='500'></svg>
-
 </body>
 </html>
