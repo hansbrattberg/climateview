@@ -56,13 +56,11 @@
             }
 
             /**
-             * Draw data and set up graph based on data. data must be an array of numbers.
+             * Set up graph based on data. data must be an array of numbers.
              * If range use that for y-axis range.
              */
             init(data, options = {}) {
-
-                console.log("data", data)
-                console.log("options", options)
+                this.data = data
 
                 var defaults = {
                     range: null,
@@ -70,7 +68,7 @@
                 }
                 options = Object.assign(defaults, options)
                 this.selected = [-1, -1]
-                this.data = data
+
                 if (options.range == null) {
                     options.range = [Math.min.apply(null, this.data), Math.max.apply(null, this.data)]
                 }
@@ -220,12 +218,6 @@
                 }
                 options = Object.assign(defaults, options)
 
-                /*
-                if (options.range == null) {
-                    options.range = [Math.min.apply(null, this.data), Math.max.apply(null, this.data)]
-                }
-                */
-
                 this.x = d3.scaleBand().rangeRound([0, this.width]).padding(0.1).domain(Object.keys(this.data))
                 this.y = d3.scaleLinear().rangeRound([this.height, 0]).domain(options.range);
 
@@ -248,11 +240,6 @@
                 if( data ){
                     this.data = data
                 }
-
-                console.log("/n")
-                console.log("-----")
-                console.log("data", data)
-                console.log("this.data", this.data)
 
                 if (this.rectangles != undefined) {
                     this.rectangles.remove();
@@ -340,7 +327,6 @@
                 reductionRate = this.value/100;
                 const [data, accumulatedData] = calculateEmissions(reductionRate)
 
-                console.log("accumulatedData changed", accumulatedData)
                 globalThis.cumulativeBarChart.draw(accumulatedData)
 
             });
@@ -352,10 +338,10 @@
 
 </head>
 <body onload='init()'>
-<h1>Umeå kommun</H1>
+<h1>Grönköping</H1>
 <p>Budget: 3140 kt CO2</p>
-<p>Emissions for 2018: 600 kt</p>
-<p>Reduction rate: <input type="number" min="0" max="360" step="1" value="15" id="reductionRate">% per year</p>
+<p>Utsläpp för 2020: 600 kt</p>
+<p>Reducerings takt: <input type="number" min="0" max="50" step="1" value="15" id="reductionRate">% per år</p>
 
 <svg width='960' height='500'></svg>
 </body>
