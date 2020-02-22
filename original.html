@@ -61,6 +61,9 @@
              */
             init(data, options = {}) {
 
+                console.log("data", data)
+                console.log("options", options)
+
                 var defaults = {
                     range: null,
                     xFormatter: null,
@@ -81,6 +84,8 @@
              */
             draw() {
                 var dg = d3.drag()
+
+                console.log("this.data", this.data)
 
                 var rectangles = this.g.selectAll('.bar')
                     .data(this.data)
@@ -240,12 +245,14 @@
              */
             draw(data) {
 
+                if( data ){
+                    this.data = data
+                }
+
+                console.log("/n")
                 console.log("-----")
                 console.log("data", data)
                 console.log("this.data", this.data)
-                console.log("-----")
-
-                this.data= data
 
                 if (this.rectangles != undefined) {
                     this.rectangles.remove();
@@ -333,8 +340,7 @@
                 reductionRate = this.value/100;
                 const [data, accumulatedData] = calculateEmissions(reductionRate)
 
-                console.log("reductionRate has changed", reductionRate)
-                console.log("new accumulatedData", accumulatedData)
+                console.log("accumulatedData changed", accumulatedData)
                 globalThis.cumulativeBarChart.draw(accumulatedData)
 
             });
